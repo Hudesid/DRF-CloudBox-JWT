@@ -68,48 +68,50 @@ class FileRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
 
     def delete(self, request, *args, **kwargs):
         file_to_delete = self.get_object()
-        models.Trash.objects.create(file=self.get_object())
-        file_to_delete.delete()
+        file_to_delete.is_deleted = True
+        file_to_delete.save()
         return Response({"detail": "File moved to trash."}, status=status.HTTP_204_NO_CONTENT)
 
 
+# class TrashListAPIView(ListAPIView):
+#     queryset = models.Trash.objects.all()
+#     serializer_class = serializers.TrashSerializer
+#     permission_classes = [IsAuthenticated or IsAdminUser]
+#     filter_backends = [SearchFilter, OrderingFilter]
+#     search_fields = ['^file__file_name', '=deleted_at']
+#     ordering_fields = ['file__folder', 'deleted_at']
+#     ordering = ['deleted_at']
+#
+#
+# class TrashRetrieveDestroyAPIView(RetrieveDestroyAPIView):
+#     queryset = models.Trash.objects.all()
+#     serializer_class = serializers.TrashSerializer
+#     permission_classes = [IsAuthenticated or IsAdminUser]
+#
+#     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated or IsAdminUser])
+#     def restore(self, request, *args, **kwargs):
+#         trash_item = self.get_object()
+#
+#         file_to_restore = trash_item.file
+#
+#         if models.File.objects.filter(id=file_to_restore.id).exists():
+#             return Response({"detail": "The file already exists."}, status=status.HTTP_400_BAD_REQUEST)
+
+
 class TrashListAPIView(ListAPIView):
-    queryset = models.Trash.objects.all()
+    queryset = models.File.objects.all()
     serializer_class = serializers.TrashSerializer
     permission_classes = [IsAuthenticated or IsAdminUser]
     filter_backends = [SearchFilter, OrderingFilter]
-    search_fields = ['^file__file_name', '=deleted_at']
-    ordering_fields = ['file__folder', 'deleted_at']
-    ordering = ['deleted_at']
+    ordering_fields = ['file_name', 'file', 'uploaded_at']
+    ordering = ['file']
+    search_fields = ['^file_name', '=file']
 
 
 class TrashRetrieveDestroyAPIView(RetrieveDestroyAPIView):
-    queryset = models.Trash.objects.all()
+    queryset = models.File.objects.all()
     serializer_class = serializers.TrashSerializer
     permission_classes = [IsAuthenticated or IsAdminUser]
-
-    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated or IsAdminUser])
-    def restore(self, request, *args, **kwargs):
-        trash_item = self.get_object()
-
-        file_to_restore = trash_item.file
-
-        if models.File.objects.filter(id=file_to_restore.id).exists():
-            return Response({"detail": "The file already exists."}, status=status.HTTP_400_BAD_REQUEST)
-
-        models.File.objects.create(
-            file_name = trash_item.file.file_name,
-            file = trash_item.file.file,
-            file_size = trash_item.file.file_size,
-            uploaded_at = trash_item.file.uploaded_at,
-            updated_at = trash_item.file.updated_at,
-            user = trash_item.file.user,
-            folder = trash_item.file.folder
-        )
-
-        trash_item.delete()
-
-        return Response({"detail": "File restored successfully!"}, status=status.HTTP_200_OK)
 
 
 class LogoutAPIView(APIView):

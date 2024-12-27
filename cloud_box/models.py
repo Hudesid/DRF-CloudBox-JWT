@@ -62,15 +62,10 @@ class File(models.Model):
     updated_at = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='files', blank=True)
     folder = models.ForeignKey(Folder, on_delete=models.CASCADE, related_name='files')
+    is_deleted = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if self.file:
             self.file_size = self.file.size
         super(File, self).save(*args, **kwargs)
 
-class Trash(models.Model):
-    file = models.ForeignKey(File, on_delete=models.CASCADE)
-    deleted_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Trash: {self.file.file_name} deleted"
